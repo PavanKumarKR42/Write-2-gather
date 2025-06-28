@@ -1,0 +1,87 @@
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+env/
+venv/
+.venv/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+target/
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+
+# macOS/Linux system files
+*.swp
+*~
+.cache/
+.vscode/
+.idea/
+*.bak
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Compiled files
+*.out
+*.o
+*.so
+*.exe
+*.dll
+
+# Git directory data
+.git/
+
+# Optional: Ignore database and dump files
+*.sqlite3
+*.db
+*.sql
+*.dump
+
+# IDEs and editors
+.vscode/
+.idea/
+*.iml
+
+# Optional: Ignore coverage reports
+coverage/
+*.lcov
+
+# Optional: Ignore test output
+test-output/
+
+# Optional: Ignore generated documentation
+docs/_build/
+
+# Optional: Ignore personal files
+*.pid
+*.seed
+*.pid.lock
