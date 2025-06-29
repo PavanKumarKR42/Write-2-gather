@@ -67,10 +67,43 @@ exports.getUserRooms = async (req, res) => {
   try {
     const rooms = await Room.find({
       participants: { $elemMatch: { user: userId } }
-    }).populate('creator', 'name').sort({ createdAt: -1 });
+    })
+    .populate('creator', 'name')
+    .populate('participants.user', 'name email') // <--- ADD THIS LINE!
+    .sort({ createdAt: -1 });
 
     res.status(200).json(rooms);
   } catch (err) {
+    console.error("Error fetching user rooms:", err); // Added for better debugging
     res.status(500).json({ error: 'Failed to fetch rooms' });
+  }
+};
+
+// backend/controllers/roomController.js
+// ... (existing imports and functions)
+
+exports.getRoomById = async (req, res) => {
+  const { roomId } = req.params; // Get roomId from URL parameters
+  const userId = req.user.userId; // From auth middleware
+
+  try {
+    const room = await Room.findById(roomId)
+      .populate('creator', 'name')
+      .populate('participants.user', 'name email'); // Populate participants for frontend needs
+
+    if (!room) {
+      return res.status(404).json({ error: 'Room not found' });
+    }
+
+    // Optional: Ensure the requesting user is actually a participant of this room
+    const isParticipant = room.participants.some(p => p.user && p.user._id && p.user._id.toString() === userId);
+    if (!isParticipant) {
+      return res.status(403).json({ error: 'You are not a participant of this room.' });
+    }
+
+    res.status(200).json({ room }); // Send the room object
+  } catch (err) {
+    console.error(`Error fetching room ${roomId}:`, err);
+    res.status(500).json({ error: 'Failed to fetch room details.' });
   }
 };

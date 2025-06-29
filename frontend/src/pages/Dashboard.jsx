@@ -1,6 +1,6 @@
 // src/pages/Dashboard.jsx
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // <--- NEW: Import Link
 
 export default function Dashboard() {
   const [rooms, setRooms] = useState([]);
@@ -233,7 +233,7 @@ export default function Dashboard() {
               <h4 className="font-medium text-md mb-2">Participants:</h4>
               <ul className="list-disc list-inside space-y-1 ml-4">
                 {room.participants.map((participant) => (
-                  <li key={participant.user?._id} className="text-sm">
+                  <li key={participant.user?._id || participant._id} className="text-sm"> {/* Added participant._id as fallback key */}
                     {participant.user?.name || "Unknown User"} ({participant.user?.email || ""})
                     <span className="ml-2">
                       {participant.canWrite ? "(Can Write)" : "(Read Only)"}
@@ -257,6 +257,13 @@ export default function Dashboard() {
                   </li>
                 ))}
               </ul>
+              {/* <--- NEW: Link to Whiteboard --- */}
+              <Link
+                to={`/board/${room._id}`}
+                className="mt-4 inline-block bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+              >
+                Open Whiteboard 🎨
+              </Link>
             </div>
           ))}
         </div>
