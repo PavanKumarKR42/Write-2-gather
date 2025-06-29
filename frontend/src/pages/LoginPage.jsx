@@ -1,5 +1,11 @@
+// src/pages/Login.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+// Use environment variable for the backend URL
+// REACT_APP_BACKEND_URL will be set by your frontend hosting platform (e.g., Render) in production
+// In local development, ensure it's defined in your frontend's .env file
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"; // <--- CHANGED
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -13,7 +19,8 @@ export default function Login() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
+      // Use environment variable for backend URL
+      const res = await fetch(`${BACKEND_URL}/api/auth/login`, { // <--- CHANGED
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

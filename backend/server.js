@@ -4,7 +4,7 @@ const http = require('http');
 const socketIO = require('socket.io');
 
 const connectDB = require('./config/db'); // Your database connection utility
-// const redisClient = require('./config/redis'); // Your Redis client (if used, not directly modified here)
+// const redisClient = require('redis'); // Your Redis client (if used, change to 'redis' if you had a file path there)
 const app = require('./app'); // ✅ Use the properly configured Express app from app.js
 
 // Connect to DB
@@ -16,7 +16,10 @@ const server = http.createServer(app);
 // Socket.IO configuration
 const io = socketIO(server, {
   cors: {
-    origin: '*', // Allows all origins. For production, specify your frontend URL (e.g., 'http://localhost:3000')
+    // Configure Socket.IO CORS to use the frontend URL from environment variables
+    // In production, FRONTEND_URL will be set to your deployed frontend URL (e.g., https://your-frontend.onrender.com)
+    // In local development, ensure it's defined in your backend's .env file (e.g., FRONTEND_URL=http://localhost:3000)
+    origin: process.env.FRONTEND_URL || 'http://localhost:5137', // <--- CHANGED
     methods: ['GET', 'POST'] // Allowed HTTP methods for CORS preflight
   }
 });

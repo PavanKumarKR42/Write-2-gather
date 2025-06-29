@@ -1,6 +1,11 @@
 // src/pages/Dashboard.jsx
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom"; // <--- NEW: Import Link
+import { useNavigate, Link } from "react-router-dom";
+
+// Use environment variable for the backend URL
+// REACT_APP_BACKEND_URL will be set by your frontend hosting platform (e.g., Render) in production
+// In local development, ensure it's defined in your frontend's .env file
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"; // <--- CHANGED
 
 export default function Dashboard() {
   const [rooms, setRooms] = useState([]);
@@ -37,7 +42,8 @@ export default function Dashboard() {
     setLoading(true); // Set loading true before fetching
     setError(""); // Clear previous errors
     try {
-      const res = await fetch("http://localhost:5000/api/rooms/my-rooms", {
+      // Use environment variable for backend URL
+      const res = await fetch(`${BACKEND_URL}/api/rooms/my-rooms`, { // <--- CHANGED
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -67,7 +73,8 @@ export default function Dashboard() {
     setError(""); // Clear previous errors
 
     try {
-      const res = await fetch("http://localhost:5000/api/rooms/create", {
+      // Use environment variable for backend URL
+      const res = await fetch(`${BACKEND_URL}/api/rooms/create`, { // <--- CHANGED
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -99,7 +106,8 @@ export default function Dashboard() {
     setError(""); // Clear previous errors
 
     try {
-      const res = await fetch("http://localhost:5000/api/rooms/join", {
+      // Use environment variable for backend URL
+      const res = await fetch(`${BACKEND_URL}/api/rooms/join`, { // <--- CHANGED
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -126,7 +134,8 @@ export default function Dashboard() {
   const handleSetPermissions = async (roomId, targetUserId, canWrite) => {
     setError(""); // Clear previous errors
     try {
-      const res = await fetch("http://localhost:5000/api/rooms/permissions", {
+      // Use environment variable for backend URL
+      const res = await fetch(`${BACKEND_URL}/api/rooms/permissions`, { // <--- CHANGED
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -238,7 +247,6 @@ export default function Dashboard() {
                     <span className="ml-2">
                       {participant.canWrite ? "(Can Write)" : "(Read Only)"}
                     </span>
-                    {/* Permission controls only for the room creator */}
                     {room.creator?._id === currentUserId &&
                      participant.user?._id !== currentUserId && ( // Can't change own permissions this way
                       <span className="ml-3">
@@ -257,7 +265,7 @@ export default function Dashboard() {
                   </li>
                 ))}
               </ul>
-              {/* <--- NEW: Link to Whiteboard --- */}
+              {/* Link to Whiteboard */}
               <Link
                 to={`/board/${room._id}`}
                 className="mt-4 inline-block bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"

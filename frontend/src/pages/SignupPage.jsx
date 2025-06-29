@@ -1,9 +1,14 @@
 // src/pages/SignupPage.jsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // 👈 import useNavigate
+import { useNavigate } from "react-router-dom";
+
+// Use environment variable for the backend URL
+// REACT_APP_BACKEND_URL will be set by your frontend hosting platform (e.g., Render) in production
+// In local development, ensure it's defined in your frontend's .env file
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"; // <--- CHANGED
 
 export default function SignupPage() {
-  const navigate = useNavigate(); // 👈 initialize navigation
+  const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -19,7 +24,8 @@ export default function SignupPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/request-otp", {
+      // Use environment variable for backend URL
+      const res = await fetch(`${BACKEND_URL}/api/auth/request-otp`, { // <--- CHANGED
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -43,7 +49,8 @@ export default function SignupPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/verify-otp", {
+      // Use environment variable for backend URL
+      const res = await fetch(`${BACKEND_URL}/api/auth/verify-otp`, { // <--- CHANGED
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp }),
@@ -67,7 +74,8 @@ export default function SignupPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register", {
+      // Use environment variable for backend URL
+      const res = await fetch(`${BACKEND_URL}/api/auth/register`, { // <--- CHANGED
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
@@ -77,7 +85,7 @@ export default function SignupPage() {
 
       setRegistered(true);
 
-      // ✅ Redirect after short delay
+      // Redirect after short delay
       setTimeout(() => {
         navigate("/login");
       }, 1500);

@@ -1,10 +1,13 @@
 // src/pages/Whiteboard.jsx
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import io from 'socket.io-client'; // Install socket.io-client: npm install socket.io-client
+import io from 'socket.io-client';
 
-const SOCKET_SERVER_URL = "http://localhost:5000";
-let socket; // Declare outside to maintain single instance
+// Use environment variable for the backend URL
+// REACT_APP_BACKEND_URL will be set by your frontend hosting platform (e.g., Render) in production
+// In local development, ensure it's defined in your frontend's .env file
+const SOCKET_SERVER_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";; // <--- CHANGED
+let socket;
 
 export default function Whiteboard() {
   const { roomId } = useParams();
@@ -61,7 +64,9 @@ export default function Whiteboard() {
       canvas.height = window.innerHeight * 0.7;
     }
 
-    socket = io(SOCKET_SERVER_URL, {
+    // Initialize Socket.IO connection
+    // This will now connect to your deployed backend URL in production
+    socket = io(SOCKET_SERVER_URL, { // <--- CHANGED
         query: { token }
     });
 
@@ -71,7 +76,7 @@ export default function Whiteboard() {
     });
 
     socket.on('load-board', ({ elements }) => {
-      console.log('Received load-board event:', elements); // Log board load
+      console.log('Received load-board event:', elements);
       if (contextRef.current) {
         contextRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         elements.forEach(element => {
@@ -82,17 +87,14 @@ export default function Whiteboard() {
               drawLine(start, end, element.color, element.thickness);
             }
           }
-          // Handle other element types (circles, rects, text) here if you implement them
         });
       }
     });
 
-    // Listen for draw events from other users
-    socket.on('draw', ({ data, userId: drawingUserId }) => { // <--- ADDED drawingUserId for clarity
-      console.log('Received draw event from server. Raw event:', { data, drawingUserId }); // <--- LOG ADDED
-      console.log('Received draw event data:', data); // <--- LOG ADDED
+    socket.on('draw', ({ data, userId: drawingUserId }) => {
+      console.log('Received draw event from server. Raw event:', { data, drawingUserId });
+      console.log('Received draw event data:', data);
 
-      // <--- ADDED NULL/UNDEFINED CHECK FOR 'data' to prevent TypeError
       if (data && data.type === 'path' && data.points && data.points.length >= 4) {
         for (let i = 0; i < data.points.length - 2; i += 2) {
           const start = { x: data.points[i], y: data.points[i+1] };
@@ -100,13 +102,12 @@ export default function Whiteboard() {
           drawLine(start, end, data.color, data.thickness);
         }
       } else {
-        console.error("Received invalid drawing data or 'data' is undefined/null:", data); // <--- LOG ADDED
+        console.error("Received invalid drawing data or 'data' is undefined/null:", data);
       }
-      // Handle other element types here
     });
 
     socket.on('clear-board', () => {
-      console.log('Received clear-board event from server.'); // Log clear board
+      console.log('Received clear-board event from server.');
       if (contextRef.current && canvasRef.current) {
         contextRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       }
@@ -114,30 +115,30 @@ export default function Whiteboard() {
 
     socket.on('permission-denied', ({ message }) => {
         setBoardError(message);
-        console.warn('Permission Denied:', message); // Log permission denied
+        console.warn('Permission Denied:', message);
     });
 
-    socket.on('board-error', ({ message }) => { // Listen for generic board errors from backend
+    socket.on('board-error', ({ message }) => {
         setBoardError(message);
         console.error('Board Error:', message);
     });
 
     socket.on('user-joined', ({ joinedUserId }) => {
-      console.log(`User ${joinedUserId} joined the room.`); // Log user joins
+      console.log(`User ${joinedUserId} joined the room.`);
     });
-
 
     // Fetch user's permission for the room to enable/disable drawing
     const fetchUserPermission = async () => {
         try {
-            const res = await fetch(`http://localhost:5000/api/rooms/${roomId}`, {
+            // Use environment variable for backend URL
+            const res = await fetch(`${SOCKET_SERVER_URL}/api/rooms/${roomId}`, { // <--- CHANGED
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await res.json();
             if (res.ok && data.room) {
                 const participant = data.room.participants.find(p => p.user?._id === userId);
                 setCanWrite(participant?.canWrite || false);
-                console.log(`User ${userId} has write permission: ${participant?.canWrite || false}`); // Log permission status
+                console.log(`User ${userId} has write permission: ${participant?.canWrite || false}`);
             } else {
                 setBoardError(data.error || "Failed to fetch room details for permissions.");
                 console.error("Failed to fetch room details for permissions:", data.error);
@@ -149,8 +150,6 @@ export default function Whiteboard() {
     };
     fetchUserPermission();
 
-
-    // Clean up on unmount
     return () => {
       if (socket) {
         console.log('Disconnecting socket...');
@@ -159,9 +158,8 @@ export default function Whiteboard() {
     };
   }, [roomId, userId, navigate, token, drawLine]);
 
-  // Drawing event handlers
   const startDrawing = ({ nativeEvent }) => {
-    setBoardError(""); // Clear error on new action
+    setBoardError("");
     if (!canWrite) {
       setBoardError("You don't have write permission.");
       return;
@@ -170,7 +168,6 @@ export default function Whiteboard() {
     contextRef.current.beginPath();
     contextRef.current.moveTo(offsetX, offsetY);
     setIsDrawing(true);
-    // Initialize a dummy lastX/lastY for the first point of a new stroke
     contextRef.current.canvas.lastX = offsetX;
     contextRef.current.canvas.lastY = offsetY;
   };
@@ -179,27 +176,23 @@ export default function Whiteboard() {
     if (!isDrawing || !canWrite) return;
     const { offsetX, offsetY } = nativeEvent;
     
-    // Draw on local canvas immediately
     contextRef.current.lineTo(offsetX, offsetY);
     contextRef.current.strokeStyle = color;
     contextRef.current.lineWidth = thickness;
     contextRef.current.stroke();
 
-    // Prepare the drawing data for emission
     const drawingData = {
       type: 'path',
       points: [
-        contextRef.current.canvas.lastX, contextRef.current.canvas.lastY, // previous point
-        offsetX, offsetY // current point
+        contextRef.current.canvas.lastX, contextRef.current.canvas.lastY,
+        offsetX, offsetY
       ],
       color,
       thickness
     };
 
-    // Emit the event to the server, with userId and data payload
-    socket.emit('draw', { userId, data: drawingData }); // <--- FIX APPLIED HERE
+    socket.emit('draw', { userId, data: drawingData });
 
-    // Update last point for the next segment
     contextRef.current.canvas.lastX = offsetX;
     contextRef.current.canvas.lastY = offsetY;
   };
@@ -210,26 +203,13 @@ export default function Whiteboard() {
   };
 
   const handleClearBoard = () => {
-    setBoardError(""); // Clear error on new action
+    setBoardError("");
     if (!canWrite) {
         setBoardError("You don't have write permission to clear the board.");
         return;
     }
-    socket.emit('clear-board', { roomId, userId }); // <--- FIX APPLIED HERE (ensure userId is passed if backend expects it)
+    socket.emit('clear-board', { roomId, userId });
   };
-
-  // No need for a separate useEffect for initial context setup if it's done in the main useEffect's canvas setup
-  // The 'ctx.canvas.lastX = offsetX; ctx.canvas.lastY = offsetY;' in startDrawing is better for initial point.
-  // Removing the duplicated useEffect:
-  // useEffect(() => {
-  //   const canvas = canvasRef.current;
-  //   if (canvas) {
-  //     const ctx = canvas.getContext('2d');
-  //     ctx.canvas.lastX = 0;
-  //     ctx.canvas.lastY = 0;
-  //   }
-  // }, []);
-
 
   return (
     <div className="flex flex-col items-center p-4">
